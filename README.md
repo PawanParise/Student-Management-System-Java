@@ -9,8 +9,6 @@ This project helps beginners understand **real-world Java development**, databas
 
 - ➕ Add new student
 - 📋 View all students
-- ✏️ Update student details
-- ❌ Delete student record
 - 🔗 JDBC connection with PostgreSQL
 - 📥 User input using Scanner
 - 💾 Data stored permanently in database
@@ -26,36 +24,23 @@ This project helps beginners understand **real-world Java development**, databas
 - **Git & GitHub**
 
 ---
+## ▶️ How to Run the Project
 
----
+1️⃣ Clone Repository
+    git clone https://github.com/PawanParise/Student-Management-System-Java.git
 
-## ⚙️ Database Setup (PostgreSQL)
+2️⃣ Compile
+    javac -cp ".;lib/postgresql-42.7.8.jar" StudentManagementSystem.java
 
-```sql
-CREATE DATABASE studentdb;
+3️⃣ Run
+    java -cp ".;lib/postgresql-42.7.8.jar" StudentManagementSystem
 
-CREATE TABLE students (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100),
-    age INT,
-    course VARCHAR(100)
-);
-
-
-## **1️⃣ Clone Repository**
-git clone https://github.com/PawanParise/Student-Management-System-Java.git
-
-## **2️⃣ Compile**
-javac -cp ".;lib/postgresql-42.7.8.jar" StudentManagementSystem.java
-
-##** 3️⃣ Run**
-java -cp ".;lib/postgresql-42.7.8.jar" StudentManagementSystem
-
-## **🖼️ Screenshots**
-📌 Main Menu
-📌 Insert Student
+## 🖼️ Screenshots
+📌 **Main Menu** and **Insert Student**
 
 <img width="1451" height="752" alt="image" src="https://github.com/user-attachments/assets/3a41d138-4a74-4c89-b934-6b73e8d5146f" />
+
+---
 
 📌**Database View (pgAdmin)**
 
@@ -73,8 +58,10 @@ java -cp ".;lib/postgresql-42.7.8.jar" StudentManagementSystem
 
 5.Real-world CRUD application
 
-## **👨‍💻 Author**
+## 👨‍💻 Author
 
-Pawan Parise
+**Pawan Parise**
+
 🔗 GitHub: https://github.com/PawanParise
+
 
