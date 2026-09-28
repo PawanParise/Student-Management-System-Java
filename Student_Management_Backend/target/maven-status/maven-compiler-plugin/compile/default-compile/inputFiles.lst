@@ -1,0 +1,14 @@
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/StudentManagementApplication.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/config/CorsConfig.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/config/OpenApiConfig.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/controller/StudentController.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/dto/DashboardStatsDto.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/dto/StudentDto.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/exception/DuplicateResourceException.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/exception/ErrorResponse.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/exception/GlobalExceptionHandler.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/exception/ResourceNotFoundException.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/model/Student.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/repository/StudentRepository.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/service/StudentService.java
+/Users/aryantambuskar/Student Management Pawan/Student-Management-System-Java/Student_Management_Backend/src/main/java/com/student/management/service/impl/StudentServiceImpl.java

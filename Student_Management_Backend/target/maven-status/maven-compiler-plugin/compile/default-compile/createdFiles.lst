@@ -1,0 +1,15 @@
+com/student/management/exception/DuplicateResourceException.class
+com/student/management/StudentManagementApplication.class
+com/student/management/exception/GlobalExceptionHandler.class
+com/student/management/controller/StudentController.class
+com/student/management/repository/StudentRepository.class
+com/student/management/dto/DashboardStatsDto.class
+com/student/management/model/Student.class
+com/student/management/service/impl/StudentServiceImpl.class
+com/student/management/exception/ErrorResponse.class
+com/student/management/config/CorsConfig$1.class
+com/student/management/service/StudentService.class
+com/student/management/exception/ResourceNotFoundException.class
+com/student/management/config/CorsConfig.class
+com/student/management/config/OpenApiConfig.class
+com/student/management/dto/StudentDto.class
