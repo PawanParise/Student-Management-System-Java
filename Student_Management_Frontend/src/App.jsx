@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Navbar from './components/Navbar';
-import StatsCards from './components/StatsCards';
-import CourseBreakdown from './components/CourseBreakdown';
+import MetricsBar from './components/MetricsBar';
+import ProgramDistribution from './components/ProgramDistribution';
 import StudentTable from './components/StudentTable';
 import StudentModal from './components/StudentModal';
 import StudentDetailModal from './components/StudentDetailModal';
 import DeleteConfirmModal from './components/DeleteConfirmModal';
+import InstitutionalPolicyModal from './components/InstitutionalPolicyModal';
 import Toast from './components/Toast';
 import { studentService } from './services/studentService';
 import './App.css';
@@ -13,7 +14,7 @@ import './App.css';
 export default function App() {
   // Theme state with localStorage persistence
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('edupulse_theme') || 'dark';
+    return localStorage.getItem('registry_theme') || 'light';
   });
 
   // Data states
@@ -34,7 +35,11 @@ export default function App() {
 
   const [detailStudent, setDetailStudent] = useState(null);
   const [deletingStudent, setDeletingStudent] = useState(null);
+  const [deletingBatchIds, setDeletingBatchIds] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Institutional Policy Modal state (privacy or tos)
+  const [activePolicyModal, setActivePolicyModal] = useState(null);
 
   // Notifications
   const [toasts, setToasts] = useState([]);
@@ -54,7 +59,7 @@ export default function App() {
   // Sync theme attribute on document
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('edupulse_theme', theme);
+    localStorage.setItem('registry_theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -77,12 +82,12 @@ export default function App() {
         setCourses(courseList || []);
         setIsBackendHealthy(true);
       } catch (err) {
-        console.error('Failed to fetch data:', err);
+        console.error('Data retrieval failed:', err);
         setIsBackendHealthy(false);
         addToast(
           'error',
-          'Backend Connection Error',
-          err.message || 'Could not connect to Spring Boot API on port 8080.'
+          'Database Connection Notice',
+          err.message || 'Unable to communicate with the Spring Boot backend on port 8080.'
         );
       } finally {
         if (showLoading) setIsLoading(false);
@@ -98,7 +103,7 @@ export default function App() {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     searchTimeoutRef.current = setTimeout(() => {
       fetchData(false);
-    }, 280);
+    }, 300);
   };
 
   const handleCourseChange = (course) => {
@@ -131,55 +136,71 @@ export default function App() {
         );
         addToast(
           'success',
-          'Student Updated',
-          `Student "${updated.name}" was updated successfully.`
+          'Record Updated',
+          `Student record for "${updated.name}" (#${updated.id}) has been updated.`
         );
       } else {
         // Create
         const created = await studentService.createStudent(formData);
         addToast(
           'success',
-          'Student Enrolled',
-          `Student "${created.name}" enrolled with ID #${created.id}.`
+          'Registration Confirmed',
+          `Student "${created.name}" was successfully registered with Record ID #${created.id}.`
         );
       }
       setIsFormModalOpen(false);
       setEditingStudent(null);
       await fetchData(false);
     } catch (err) {
-      console.error('Save failed:', err);
+      console.error('Submission failed:', err);
       addToast('error', 'Operation Failed', err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Delete handler
-  const handleConfirmDelete = async (id) => {
+  // Delete single student handler
+  const handleConfirmDelete = async (target) => {
     setIsDeleting(true);
     try {
-      await studentService.deleteStudent(id);
-      addToast(
-        'info',
-        'Student Removed',
-        `Student record #${id} was deleted from database.`
-      );
-      setDeletingStudent(null);
+      if (Array.isArray(target)) {
+        // Batch delete
+        await Promise.all(target.map((id) => studentService.deleteStudent(id)));
+        addToast(
+          'info',
+          'Batch Deletion Complete',
+          `Successfully removed ${target.length} student record(s) from the registry.`
+        );
+        setDeletingBatchIds(null);
+      } else {
+        // Single delete
+        await studentService.deleteStudent(target);
+        addToast(
+          'info',
+          'Record Deleted',
+          `Student record #${target} was permanently removed from PostgreSQL.`
+        );
+        setDeletingStudent(null);
+      }
       await fetchData(false);
     } catch (err) {
-      console.error('Delete failed:', err);
-      addToast('error', 'Deletion Error', err.message);
+      console.error('Deletion error:', err);
+      addToast('error', 'Deletion Failed', err.message);
     } finally {
       setIsDeleting(false);
     }
   };
 
+  const handlePrintRoster = () => {
+    window.print();
+  };
+
   return (
-    <div className="app-layout">
+    <div className="registry-app">
       {/* Toast Notifications */}
       <Toast toasts={toasts} removeToast={removeToast} />
 
-      {/* Top Navigation */}
+      {/* Institutional Navigation */}
       <Navbar
         theme={theme}
         toggleTheme={toggleTheme}
@@ -188,33 +209,34 @@ export default function App() {
           setIsFormModalOpen(true);
         }}
         isBackendHealthy={isBackendHealthy}
+        onPrint={handlePrintRoster}
       />
 
-      {/* Main Content Area */}
-      <main className="main-content">
-        <div className="content-container">
-          {/* Hero Section */}
-          <section className="hero-section">
-            <div className="hero-text-wrap">
-              <h1 className="hero-title">
-                Academic Roster & <span className="gradient-text">Student Directory</span>
+      {/* Main Workspace */}
+      <main className="registry-main">
+        <div className="registry-container">
+          {/* Institutional Section Header */}
+          <div className="registry-section-header no-print">
+            <div className="section-title-wrap">
+              <h1 className="section-title">
+                Academic Student Directory
               </h1>
-              <p className="hero-subtitle">
-                Manage student enrollment, monitor academic cohorts, and query PostgreSQL in real-time.
+              <p className="section-subtitle">
+                Official institutional roster, enrollment records, and PostgreSQL database registry.
               </p>
             </div>
-          </section>
+          </div>
 
-          {/* KPI Stat Cards */}
-          <StatsCards
+          {/* Administrative Metric Strip */}
+          <MetricsBar
             stats={stats}
             totalFiltered={students.length}
             totalCourses={courses.length}
           />
 
-          {/* Course Distribution Visual Breakdown */}
+          {/* Academic Program Distribution */}
           {stats?.courseDistribution && (
-            <CourseBreakdown
+            <ProgramDistribution
               courseDistribution={stats.courseDistribution}
               totalStudents={stats.totalStudents}
               selectedCourse={selectedCourse}
@@ -222,7 +244,7 @@ export default function App() {
             />
           )}
 
-          {/* Student Table & Filter Tools */}
+          {/* Student Table & Operations */}
           <StudentTable
             students={students}
             courses={courses}
@@ -240,31 +262,48 @@ export default function App() {
               setIsFormModalOpen(true);
             }}
             onDeleteStudent={(student) => setDeletingStudent(student)}
+            onBatchDelete={(ids) => setDeletingBatchIds(ids)}
             onRefresh={() => fetchData(true)}
             isLoading={isLoading}
           />
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="footer-container">
-        <div className="footer-inner">
-          <div className="footer-left">
-            <span>EduPulse Student Management System</span>
-            <span className="footer-dot">•</span>
-            <span className="footer-sub">Spring Boot 3.3.4 + React + PostgreSQL 18</span>
+      {/* Institutional Legal Footer */}
+      <footer className="registry-footer no-print">
+        <div className="registry-footer-inner">
+          <div className="footer-meta-block">
+            <div className="footer-authority">
+              Office of the University Registrar | Student Information System
+            </div>
+            <div className="footer-copyright">
+              © 2026 Academic Records Administration. All rights reserved.
+            </div>
           </div>
-          <div className="footer-tech-stack">
-            <span className="tech-badge">Java 21</span>
-            <span className="tech-badge">Spring Data JPA</span>
-            <span className="tech-badge">PostgreSQL</span>
-            <span className="tech-badge">Vite + React</span>
-            <span className="tech-badge">REST API</span>
+
+          <div className="footer-compliance-links">
+            <button
+              onClick={() => setActivePolicyModal('privacy')}
+              className="footer-link-action"
+            >
+              FERPA & Privacy Policy
+            </button>
+            <span className="footer-separator">|</span>
+            <button
+              onClick={() => setActivePolicyModal('tos')}
+              className="footer-link-action"
+            >
+              Terms of Service
+            </button>
+            <span className="footer-separator">|</span>
+            <span className="footer-tech-spec">
+              Spring Boot 3.3.4 • PostgreSQL 18 • React 19
+            </span>
           </div>
         </div>
       </footer>
 
-      {/* Add / Edit Student Modal */}
+      {/* Student Form Modal (Create or Edit) */}
       <StudentModal
         isOpen={isFormModalOpen}
         onClose={() => {
@@ -277,7 +316,7 @@ export default function App() {
         availableCourses={courses}
       />
 
-      {/* Student Profile Quick View Modal */}
+      {/* Student Detail View Modal */}
       <StudentDetailModal
         isOpen={Boolean(detailStudent)}
         student={detailStudent}
@@ -293,13 +332,24 @@ export default function App() {
         }}
       />
 
-      {/* Safe Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal (Single or Batch) */}
       <DeleteConfirmModal
-        isOpen={Boolean(deletingStudent)}
+        isOpen={Boolean(deletingStudent || deletingBatchIds)}
         student={deletingStudent}
-        onClose={() => setDeletingStudent(null)}
+        batchIds={deletingBatchIds}
+        onClose={() => {
+          setDeletingStudent(null);
+          setDeletingBatchIds(null);
+        }}
         onConfirm={handleConfirmDelete}
         isDeleting={isDeleting}
+      />
+
+      {/* Institutional Privacy & Terms of Service Modal */}
+      <InstitutionalPolicyModal
+        isOpen={Boolean(activePolicyModal)}
+        type={activePolicyModal}
+        onClose={() => setActivePolicyModal(null)}
       />
     </div>
   );

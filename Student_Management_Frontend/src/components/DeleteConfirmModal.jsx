@@ -1,53 +1,78 @@
-import React from 'react';
-import { AlertTriangle, Trash2, X, Loader2 } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { IconClose, IconTrash, IconAlertTriangle } from './Icons';
 
 export default function DeleteConfirmModal({
   isOpen,
-  student,
+  student = null,
+  batchIds = null,
   onClose,
   onConfirm,
   isDeleting = false,
 }) {
-  if (!isOpen || !student) return null;
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen && !isDeleting) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isDeleting, onClose]);
+
+  if (!isOpen) return null;
+
+  const isBatch = Boolean(batchIds && batchIds.length > 0);
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div
-        className="modal-container delete-modal"
+        className="modal-box modal-box-alert"
         onClick={(e) => e.stopPropagation()}
-        role="alertdialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-dialog-title"
       >
-        <div className="modal-header">
-          <div className="modal-title-wrap">
-            <div className="modal-icon-badge danger-badge">
-              <AlertTriangle size={20} className="text-danger" />
+        <div className="modal-header-bar">
+          <div className="alert-title-wrap">
+            <div className="alert-icon-square">
+              <IconAlertTriangle size={18} />
             </div>
             <div>
-              <h2 className="modal-title text-danger">Delete Student Record</h2>
-              <p className="modal-subtitle">This action cannot be undone</p>
+              <h2 className="modal-heading" id="delete-dialog-title">
+                {isBatch ? 'Confirm Batch Deletion' : 'Confirm Record Deletion'}
+              </h2>
+              <div className="modal-subheading">
+                Permanent database action
+              </div>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="modal-close-btn"
+            className="modal-close-action"
+            aria-label="Close dialog"
             disabled={isDeleting}
-            aria-label="Close"
           >
-            <X size={18} />
+            <IconClose size={16} />
           </button>
         </div>
 
-        <div className="delete-modal-body">
-          <p>
-            Are you sure you want to permanently delete student{' '}
-            <strong className="delete-highlight">{student.name}</strong> (ID: #{student.id})?
-          </p>
-          <p className="delete-subtext">
-            This will permanently remove the record from the PostgreSQL <code>students</code> database table.
-          </p>
+        <div className="modal-alert-body">
+          {isBatch ? (
+            <p className="alert-text">
+              You are about to permanently delete <strong>{batchIds.length}</strong> selected student record(s) from the PostgreSQL registry.
+            </p>
+          ) : (
+            <p className="alert-text">
+              Are you sure you want to permanently delete the academic record for{' '}
+              <strong>{student?.name}</strong> (Record ID #{student?.id})?
+            </p>
+          )}
+          <div className="alert-warning-box">
+            This action cannot be undone. All associated enrollment records will be permanently removed.
+          </div>
         </div>
 
-        <div className="modal-footer">
+        <div className="modal-actions-bar">
           <button
             type="button"
             onClick={onClose}
@@ -58,22 +83,19 @@ export default function DeleteConfirmModal({
           </button>
           <button
             type="button"
-            onClick={() => onConfirm(student.id)}
+            onClick={() => onConfirm(isBatch ? batchIds : student?.id)}
             className="btn-danger"
             disabled={isDeleting}
-            id="confirm-delete-btn"
+            id="confirm-delete-button"
           >
-            {isDeleting ? (
-              <>
-                <Loader2 size={16} className="rotating" />
-                <span>Deleting...</span>
-              </>
-            ) : (
-              <>
-                <Trash2 size={16} />
-                <span>Delete Permanently</span>
-              </>
-            )}
+            <IconTrash size={14} />
+            <span>
+              {isDeleting
+                ? 'Deleting...'
+                : isBatch
+                ? `Delete ${batchIds.length} Records`
+                : 'Confirm Deletion'}
+            </span>
           </button>
         </div>
       </div>

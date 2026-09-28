@@ -1,37 +1,42 @@
 import React from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import { IconClose, IconCheck, IconAlertTriangle } from './Icons';
 
-export default function Toast({ toasts, removeToast }) {
+export default function Toast({ toasts = [], removeToast }) {
   if (!toasts || toasts.length === 0) return null;
 
   return (
-    <div className="toast-container" id="toast-container">
+    <div className="toast-tray" aria-live="polite" role="region">
       {toasts.map((toast) => {
-        let Icon = CheckCircle2;
-        let toastClass = 'toast-success';
-        if (toast.type === 'error') {
-          Icon = AlertCircle;
-          toastClass = 'toast-error';
-        } else if (toast.type === 'info') {
-          Icon = Info;
-          toastClass = 'toast-info';
-        }
+        const isError = toast.type === 'error';
+        const isSuccess = toast.type === 'success';
 
         return (
-          <div key={toast.id} className={`toast-card ${toastClass}`}>
-            <div className="toast-icon">
-              <Icon size={18} />
+          <div
+            key={toast.id}
+            className={`toast-unit toast-${toast.type || 'info'}`}
+            role="alert"
+          >
+            <div className="toast-status-icon">
+              {isSuccess ? (
+                <IconCheck size={14} />
+              ) : isError ? (
+                <IconAlertTriangle size={14} />
+              ) : (
+                <span className="toast-dot-bullet">•</span>
+              )}
             </div>
+
             <div className="toast-content">
-              {toast.title && <div className="toast-title">{toast.title}</div>}
-              <div className="toast-message">{toast.message}</div>
+              <div className="toast-title">{toast.title}</div>
+              <div className="toast-msg">{toast.message}</div>
             </div>
+
             <button
               onClick={() => removeToast(toast.id)}
               className="toast-close-btn"
-              aria-label="Dismiss toast"
+              aria-label="Dismiss notification"
             >
-              <X size={14} />
+              <IconClose size={13} />
             </button>
           </div>
         );

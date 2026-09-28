@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, User, Mail, Calendar, GraduationCap, Loader2, Sparkles } from 'lucide-react';
+import { IconClose } from './Icons';
 
-const COMMON_COURSES = [
+const DEFAULT_COURSES = [
   'Software Engineering',
-  'AI_DS',
+  'AI and Data Science',
   'Computer Science',
-  'Data Science',
-  'Cybersecurity',
-  'ETC',
   'Information Technology',
-  'Cloud Computing',
+  'Cybersecurity',
+  'Electronics and Telecommunication',
+  'Cloud Computing and DevOps',
+  'Electrical Engineering',
 ];
 
 export default function StudentModal({
@@ -32,9 +32,9 @@ export default function StudentModal({
 
   const isEditing = Boolean(initialData && initialData.id);
 
-  // Merge available courses with predefined common ones
-  const allCourseOptions = Array.from(
-    new Set([...availableCourses, ...COMMON_COURSES])
+  // Combine available courses from backend with default programs
+  const programOptions = Array.from(
+    new Set([...availableCourses, ...DEFAULT_COURSES])
   ).filter(Boolean);
 
   useEffect(() => {
@@ -45,8 +45,7 @@ export default function StudentModal({
         age: initialData.age != null ? String(initialData.age) : '',
         course: initialData.course || '',
       });
-      // Check if course is in existing list
-      if (initialData.course && !allCourseOptions.includes(initialData.course)) {
+      if (initialData.course && !programOptions.includes(initialData.course)) {
         setCustomCourseMode(true);
       } else {
         setCustomCourseMode(false);
@@ -56,40 +55,51 @@ export default function StudentModal({
         name: '',
         email: '',
         age: '',
-        course: allCourseOptions[0] || 'Software Engineering',
+        course: programOptions[0] || 'Software Engineering',
       });
       setCustomCourseMode(false);
     }
     setErrors({});
   }, [initialData, isOpen]);
 
+  // Handle ESC key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen && !isSubmitting) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isSubmitting, onClose]);
+
   if (!isOpen) return null;
 
   const validate = () => {
     const errs = {};
     if (!formData.name.trim()) {
-      errs.name = 'Full name is required';
+      errs.name = 'Student full legal name is required.';
     } else if (formData.name.trim().length < 2) {
-      errs.name = 'Name must be at least 2 characters';
+      errs.name = 'Full name must contain at least 2 characters.';
     }
 
     if (!formData.email.trim()) {
-      errs.email = 'Email address is required';
+      errs.email = 'Institutional email address is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      errs.email = 'Enter a valid email address';
+      errs.email = 'Please provide a valid email address format.';
     }
 
     if (!formData.age) {
-      errs.age = 'Age is required';
+      errs.age = 'Student age is required.';
     } else {
       const ageNum = parseInt(formData.age, 10);
       if (isNaN(ageNum) || ageNum < 5 || ageNum > 100) {
-        errs.age = 'Age must be between 5 and 100';
+        errs.age = 'Age must be a valid number between 5 and 100.';
       }
     }
 
     if (!formData.course.trim()) {
-      errs.course = 'Please select or enter a course stream';
+      errs.course = 'Academic program/course selection is required.';
     }
 
     setErrors(errs);
@@ -109,167 +119,156 @@ export default function StudentModal({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div
-        className="modal-container"
+        className="modal-box"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        aria-labelledby="student-modal-title"
       >
-        {/* Header */}
-        <div className="modal-header">
-          <div className="modal-title-wrap">
-            <div className="modal-icon-badge">
-              <Sparkles size={20} className="text-accent" />
-            </div>
-            <div>
-              <h2 className="modal-title" id="modal-title">
-                {isEditing ? 'Edit Student Details' : 'Enroll New Student'}
-              </h2>
-              <p className="modal-subtitle">
-                {isEditing
-                  ? `Update information for #${initialData.id} (${initialData.name})`
-                  : 'Enter student information to store in PostgreSQL'}
-              </p>
+        {/* Modal Header */}
+        <div className="modal-header-bar">
+          <div>
+            <h2 className="modal-heading" id="student-modal-title">
+              {isEditing ? 'Modify Student Record' : 'Student Registration'}
+            </h2>
+            <div className="modal-subheading">
+              {isEditing
+                ? `Update academic records for Record ID #${initialData.id}`
+                : 'Enter legal student information to register in PostgreSQL registry'}
             </div>
           </div>
           <button
             onClick={onClose}
-            className="modal-close-btn"
-            aria-label="Close modal"
+            className="modal-close-action"
+            aria-label="Close dialog"
+            disabled={isSubmitting}
           >
-            <X size={18} />
+            <IconClose size={16} />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="modal-form">
-          {/* Full Name */}
-          <div className="form-group">
-            <label className="form-label">
-              Full Name <span className="required-star">*</span>
+        <form onSubmit={handleSubmit} className="modal-form-content">
+          {/* Full Legal Name */}
+          <div className="form-row">
+            <label htmlFor="student-name-input" className="form-field-label">
+              Legal Full Name <span className="field-required">*</span>
             </label>
-            <div className="input-group">
-              <User size={18} className="input-icon" />
-              <input
-                type="text"
-                className={`form-input ${errors.name ? 'input-error' : ''}`}
-                placeholder="e.g. John Doe"
-                value={formData.name}
-                onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value });
-                  if (errors.name) setErrors({ ...errors, name: null });
-                }}
-                disabled={isSubmitting}
-                autoFocus
-              />
-            </div>
-            {errors.name && <span className="field-error">{errors.name}</span>}
+            <input
+              id="student-name-input"
+              type="text"
+              className={`form-text-input ${errors.name ? 'form-input-error' : ''}`}
+              placeholder="e.g. Eleanor Vance"
+              value={formData.name}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                if (errors.name) setErrors({ ...errors, name: null });
+              }}
+              disabled={isSubmitting}
+              autoFocus
+            />
+            {errors.name && <div className="form-error-msg">{errors.name}</div>}
           </div>
 
           {/* Email Address */}
-          <div className="form-group">
-            <label className="form-label">
-              Email Address <span className="required-star">*</span>
+          <div className="form-row">
+            <label htmlFor="student-email-input" className="form-field-label">
+              Email Address <span className="field-required">*</span>
             </label>
-            <div className="input-group">
-              <Mail size={18} className="input-icon" />
+            <input
+              id="student-email-input"
+              type="email"
+              className={`form-text-input ${errors.email ? 'form-input-error' : ''}`}
+              placeholder="e.g. eleanor.vance@university.edu"
+              value={formData.email}
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value });
+                if (errors.email) setErrors({ ...errors, email: null });
+              }}
+              disabled={isSubmitting}
+            />
+            {errors.email && <div className="form-error-msg">{errors.email}</div>}
+          </div>
+
+          {/* Age & Academic Program */}
+          <div className="form-dual-row">
+            {/* Age */}
+            <div className="form-row">
+              <label htmlFor="student-age-input" className="form-field-label">
+                Age <span className="field-required">*</span>
+              </label>
               <input
-                type="email"
-                className={`form-input ${errors.email ? 'input-error' : ''}`}
-                placeholder="e.g. john@university.edu"
-                value={formData.email}
+                id="student-age-input"
+                type="number"
+                min="5"
+                max="100"
+                className={`form-text-input ${errors.age ? 'form-input-error' : ''}`}
+                placeholder="e.g. 21"
+                value={formData.age}
                 onChange={(e) => {
-                  setFormData({ ...formData, email: e.target.value });
-                  if (errors.email) setErrors({ ...errors, email: null });
+                  setFormData({ ...formData, age: e.target.value });
+                  if (errors.age) setErrors({ ...errors, age: null });
                 }}
                 disabled={isSubmitting}
               />
-            </div>
-            {errors.email && <span className="field-error">{errors.email}</span>}
-          </div>
-
-          {/* Age & Course Grid */}
-          <div className="form-row-grid">
-            {/* Age */}
-            <div className="form-group">
-              <label className="form-label">
-                Age <span className="required-star">*</span>
-              </label>
-              <div className="input-group">
-                <Calendar size={18} className="input-icon" />
-                <input
-                  type="number"
-                  min="5"
-                  max="100"
-                  className={`form-input ${errors.age ? 'input-error' : ''}`}
-                  placeholder="e.g. 21"
-                  value={formData.age}
-                  onChange={(e) => {
-                    setFormData({ ...formData, age: e.target.value });
-                    if (errors.age) setErrors({ ...errors, age: null });
-                  }}
-                  disabled={isSubmitting}
-                />
-              </div>
-              {errors.age && <span className="field-error">{errors.age}</span>}
+              {errors.age && <div className="form-error-msg">{errors.age}</div>}
             </div>
 
-            {/* Course / Stream */}
-            <div className="form-group">
-              <div className="label-with-action">
-                <label className="form-label">
-                  Course / Stream <span className="required-star">*</span>
+            {/* Academic Program */}
+            <div className="form-row">
+              <div className="label-dual-wrap">
+                <label htmlFor="student-program-input" className="form-field-label">
+                  Academic Program <span className="field-required">*</span>
                 </label>
                 <button
                   type="button"
-                  className="link-btn-toggle"
+                  className="btn-mode-toggle"
                   onClick={() => setCustomCourseMode(!customCourseMode)}
                 >
-                  {customCourseMode ? 'Choose from list' : '+ Custom Course'}
+                  {customCourseMode ? 'Select from list' : '+ Custom program'}
                 </button>
               </div>
 
-              <div className="input-group">
-                <GraduationCap size={18} className="input-icon" />
-                {customCourseMode ? (
-                  <input
-                    type="text"
-                    className={`form-input ${errors.course ? 'input-error' : ''}`}
-                    placeholder="Enter custom stream name..."
-                    value={formData.course}
-                    onChange={(e) => {
-                      setFormData({ ...formData, course: e.target.value });
-                      if (errors.course) setErrors({ ...errors, course: null });
-                    }}
-                    disabled={isSubmitting}
-                  />
-                ) : (
-                  <select
-                    className={`form-select ${errors.course ? 'input-error' : ''}`}
-                    value={formData.course}
-                    onChange={(e) => {
-                      setFormData({ ...formData, course: e.target.value });
-                      if (errors.course) setErrors({ ...errors, course: null });
-                    }}
-                    disabled={isSubmitting}
-                  >
-                    <option value="">Select a Course</option>
-                    {allCourseOptions.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-              {errors.course && <span className="field-error">{errors.course}</span>}
+              {customCourseMode ? (
+                <input
+                  id="student-program-input"
+                  type="text"
+                  className={`form-text-input ${errors.course ? 'form-input-error' : ''}`}
+                  placeholder="Enter academic program / major..."
+                  value={formData.course}
+                  onChange={(e) => {
+                    setFormData({ ...formData, course: e.target.value });
+                    if (errors.course) setErrors({ ...errors, course: null });
+                  }}
+                  disabled={isSubmitting}
+                />
+              ) : (
+                <select
+                  id="student-program-input"
+                  className={`form-select-input ${errors.course ? 'form-input-error' : ''}`}
+                  value={formData.course}
+                  onChange={(e) => {
+                    setFormData({ ...formData, course: e.target.value });
+                    if (errors.course) setErrors({ ...errors, course: null });
+                  }}
+                  disabled={isSubmitting}
+                >
+                  <option value="">Select Academic Program</option>
+                  {programOptions.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {errors.course && <div className="form-error-msg">{errors.course}</div>}
             </div>
           </div>
 
-          {/* Footer Actions */}
-          <div className="modal-footer">
+          {/* Action Buttons */}
+          <div className="modal-actions-bar">
             <button
               type="button"
               onClick={onClose}
@@ -284,14 +283,11 @@ export default function StudentModal({
               disabled={isSubmitting}
               id="submit-student-btn"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="rotating" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <span>{isEditing ? 'Save Changes' : 'Confirm Enrollment'}</span>
-              )}
+              {isSubmitting
+                ? 'Processing...'
+                : isEditing
+                ? 'Save Record Changes'
+                : 'Confirm Registration'}
             </button>
           </div>
         </form>

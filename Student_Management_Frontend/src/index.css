@@ -1,87 +1,104 @@
 :root {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  /* System Font Stack - Clean, Institutional, Fast */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
-  /* Color Palette - Default Dark Theme */
-  --bg-app: #0b0f19;
-  --bg-surface: #111827;
-  --bg-card: rgba(17, 24, 39, 0.75);
-  --bg-card-hover: rgba(31, 41, 55, 0.85);
-  --bg-glass: rgba(17, 24, 39, 0.65);
-  --bg-input: rgba(15, 23, 42, 0.8);
-  --bg-modal-overlay: rgba(3, 7, 18, 0.75);
-
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: #6366f1;
-  --border-card: rgba(255, 255, 255, 0.1);
-
-  --text-primary: #f9fafb;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-  --text-inverse: #0b0f19;
-
-  --accent-primary: #6366f1;
-  --accent-primary-hover: #4f46e5;
-  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
-  --accent-gradient-glow: rgba(99, 102, 241, 0.35);
-
-  --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.12);
-  --success-border: rgba(16, 185, 129, 0.3);
-
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.12);
-  --warning-border: rgba(245, 158, 11, 0.3);
-
-  --danger: #f43f5e;
-  --danger-bg: rgba(244, 63, 94, 0.12);
-  --danger-border: rgba(244, 63, 94, 0.3);
-
-  --info: #06b6d4;
-  --info-bg: rgba(6, 182, 212, 0.12);
-  --info-border: rgba(6, 182, 212, 0.3);
-
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 24px -2px var(--accent-gradient-glow);
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
-
-  --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-[data-theme='light'] {
-  --bg-app: #f4f6fb;
+  /* Color System - Light Theme */
+  --bg-app: #f1f5f9;
   --bg-surface: #ffffff;
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-hover: #ffffff;
-  --bg-glass: rgba(255, 255, 255, 0.75);
-  --bg-input: #ffffff;
-  --bg-modal-overlay: rgba(15, 23, 42, 0.45);
+  --bg-subtle: #f8fafc;
+  --bg-hover: #e2e8f0;
+  --bg-active: #cbd5e1;
+  --bg-overlay: rgba(15, 23, 42, 0.65);
 
-  --border-subtle: rgba(203, 213, 225, 0.8);
-  --border-focus: #4f46e5;
-  --border-card: rgba(226, 232, 240, 0.9);
+  --border: #cbd5e1;
+  --border-subtle: #e2e8f0;
+  --border-focus: #1d4ed8;
 
   --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
   --text-inverse: #ffffff;
 
-  --accent-primary: #4f46e5;
-  --accent-primary-hover: #4338ca;
-  --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #c026d3 100%);
-  --accent-gradient-glow: rgba(79, 70, 229, 0.22);
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --primary-active: #172554;
+  --primary-text: #ffffff;
 
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 16px 32px -4px rgba(0, 0, 0, 0.12);
-  --shadow-glow: 0 0 25px -4px rgba(79, 70, 229, 0.25);
+  --secondary: #475569;
+  --secondary-hover: #334155;
+
+  --success: #15803d;
+  --success-bg: #f0fdf4;
+  --success-border: #bbf7d0;
+
+  --warning: #b45309;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+
+  --danger: #b91c1c;
+  --danger-hover: #991b1b;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+
+  --info: #0369a1;
+  --info-bg: #f0f9ff;
+  --info-border: #bae6fd;
+
+  --radius-sm: 2px;
+  --radius: 4px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
+  --shadow-none: none;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 4px 16px -2px rgba(15, 23, 42, 0.18);
+}
+
+[data-theme='dark'] {
+  --bg-app: #0b1120;
+  --bg-surface: #111c30;
+  --bg-subtle: #16233d;
+  --bg-hover: #1c2c4d;
+  --bg-active: #233554;
+  --bg-overlay: rgba(3, 7, 18, 0.82);
+
+  --border: #233554;
+  --border-subtle: #192742;
+  --border-focus: #3b82f6;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-inverse: #0b1120;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-active: #1e40af;
+  --primary-text: #ffffff;
+
+  --secondary: #64748b;
+  --secondary-hover: #94a3b8;
+
+  --success: #16a34a;
+  --success-bg: #0d2818;
+  --success-border: #14532d;
+
+  --warning: #d97706;
+  --warning-bg: #2d1d05;
+  --warning-border: #78350f;
+
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-bg: #311116;
+  --danger-border: #7f1d1d;
+
+  --info: #0284c7;
+  --info-bg: #08253a;
+  --info-border: #0369a1;
+
+  --shadow-sm: none;
+  --shadow-modal: 0 4px 20px -2px rgba(0, 0, 0, 0.6);
 }
 
 * {
@@ -98,30 +115,49 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(217, 70, 239, 0.04) 0px, transparent 60%);
-  background-attachment: fixed;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Custom Scrollbar */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg-subtle);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
-  border-radius: 4px;
+  background: var(--border);
+  border-radius: var(--radius-sm);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.5);
+  background: var(--secondary);
 }
 
 button, input, select, textarea {
   font-family: inherit;
+  font-size: inherit;
+}
+
+/* Accessibility focus ring */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+/* Print utilities */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .table-wrapper-card {
+    border: none !important;
+    box-shadow: none !important;
+  }
 }
