@@ -24,27 +24,25 @@ Student-Management-System-Java/
 │       └── main/resources/
 │           └── application.properties  # PostgreSQL DB configuration
 │
-├── Student_Management_Fronend/          # React (Vite) Frontend Application
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── index.html
-│   └── src/
-│       ├── components/
-│       │   ├── Navbar.jsx              # Brand, live backend ping, theme toggle, add CTA
-│       │   ├── StatsCards.jsx          # KPI metrics (Total students, Avg age, Courses, DB)
-│       │   ├── CourseBreakdown.jsx     # Interactive course distribution progress & chips
-│       │   ├── StudentTable.jsx        # Data table with sorting, search, CSV export
-│       │   ├── StudentModal.jsx        # Add & Edit Student modal with validations
-│       │   ├── StudentDetailModal.jsx  # Student profile card modal
-│       │   ├── DeleteConfirmModal.jsx  # Safe deletion confirmation dialog
-│       │   └── Toast.jsx               # Floating toast notifications
-│       ├── services/
-│       │   └── studentService.js       # REST API client
-│       ├── App.jsx                     # State management & view composition
-│       ├── App.css                     # Design system, glassmorphism & responsive styles
-│       └── index.css                   # Theme tokens (Dark/Light mode) & base reset
-│
-└── Student_Management_Frontend -> Student_Management_Fronend (Symlink)
+└── Student_Management_Frontend/         # React (Vite) Frontend Application
+    ├── package.json
+    ├── vite.config.js
+    ├── index.html
+    └── src/
+        ├── components/
+        │   ├── Navbar.jsx              # Brand, live backend ping, theme toggle, add CTA
+        │   ├── StatsCards.jsx          # KPI metrics (Total students, Avg age, Courses, DB)
+        │   ├── CourseBreakdown.jsx     # Interactive course distribution progress & chips
+        │   ├── StudentTable.jsx        # Data table with sorting, search, CSV export
+        │   ├── StudentModal.jsx        # Add & Edit Student modal with validations
+        │   ├── StudentDetailModal.jsx  # Student profile card modal
+        │   ├── DeleteConfirmModal.jsx  # Safe deletion confirmation dialog
+        │   └── Toast.jsx               # Floating toast notifications
+        ├── services/
+        │   └── studentService.js       # REST API client
+        ├── App.jsx                     # State management & view composition
+        ├── App.css                     # Design system, glassmorphism & responsive styles
+        └── index.css                   # Theme tokens (Dark/Light mode) & base reset
 ```
 
 ---
@@ -67,7 +65,7 @@ cd Student_Management_Backend
 
 ### 3. Run the Frontend (React + Vite)
 ```bash
-cd Student_Management_Fronend
+cd Student_Management_Frontend
 npm install
 npm run dev
 ```
