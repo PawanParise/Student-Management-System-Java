@@ -1,48 +1,25 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Search,
-  X,
-  Filter,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Download,
-  Eye,
-  Edit2,
-  Trash2,
-  UserPlus,
-  RefreshCw,
-  Mail,
-  GraduationCap
-} from 'lucide-react';
-
-// Generates a deterministic sleek gradient avatar from the student's name
-function getAvatarGradient(name = '') {
-  const gradients = [
-    'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-    'linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)',
-    'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
-    'linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)',
-    'linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%)',
-    'linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%)',
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % gradients.length;
-  return gradients[index];
-}
-
-function getInitials(name = '') {
-  const parts = name.trim().split(' ').filter(Boolean);
-  if (parts.length === 0) return '?';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
+  IconSearch,
+  IconClose,
+  IconFilter,
+  IconDownload,
+  IconPrinter,
+  IconRefresh,
+  IconEye,
+  IconEdit,
+  IconTrash,
+  IconPlus,
+  IconSortDefault,
+  IconSortAsc,
+  IconSortDesc,
+  IconChevronLeft,
+  IconChevronRight,
+  IconCheck
+} from './Icons';
 
 function formatDate(dateStr) {
-  if (!dateStr) return '—';
+  if (!dateStr) return 'Not recorded';
   try {
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-US', {
@@ -66,12 +43,25 @@ export default function StudentTable({
   onViewStudent,
   onEditStudent,
   onDeleteStudent,
+  onBatchDelete,
   onRefresh,
   isLoading = false,
 }) {
+  // Sorting state
   const [sortField, setSortField] = useState('id');
   const [sortDirection, setSortDirection] = useState('desc');
 
+  // Age filter state
+  const [ageFilter, setAgeFilter] = useState('ALL');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Row selection state for batch actions
+  const [selectedIds, setSelectedIds] = useState(new Set());
+
+  // Handle Sort
   const handleSort = (field) => {
     if (sortField === field) {
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
@@ -79,12 +69,46 @@ export default function StudentTable({
       setSortField(field);
       setSortDirection('asc');
     }
+    setCurrentPage(1);
   };
 
+  // Filter students by Search, Course, and Age
+  const filteredStudents = useMemo(() => {
+    return students.filter((s) => {
+      // Search matching name, email, or ID
+      if (searchQuery && searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesName = (s.name || '').toLowerCase().includes(q);
+        const matchesEmail = (s.email || '').toLowerCase().includes(q);
+        const matchesId = String(s.id).includes(q);
+        if (!matchesName && !matchesEmail && !matchesId) return false;
+      }
+
+      // Course filter
+      if (selectedCourse && selectedCourse !== 'ALL') {
+        if (s.course !== selectedCourse) return false;
+      }
+
+      // Age filter
+      if (ageFilter !== 'ALL') {
+        const age = Number(s.age);
+        if (ageFilter === 'UNDER_20' && age >= 20) return false;
+        if (ageFilter === '20_25' && (age < 20 || age > 25)) return false;
+        if (ageFilter === 'OVER_25' && age <= 25) return false;
+      }
+
+      return true;
+    });
+  }, [students, searchQuery, selectedCourse, ageFilter]);
+
+  // Sort filtered students
   const sortedStudents = useMemo(() => {
-    return [...students].sort((a, b) => {
+    return [...filteredStudents].sort((a, b) => {
       let valA = a[sortField];
       let valB = b[sortField];
+
+      if (valA == null) valA = '';
+      if (valB == null) valB = '';
 
       if (typeof valA === 'string') valA = valA.toLowerCase();
       if (typeof valB === 'string') valB = valB.toLowerCase();
@@ -93,20 +117,68 @@ export default function StudentTable({
       if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [students, sortField, sortDirection]);
+  }, [filteredStudents, sortField, sortDirection]);
 
-  // Export to CSV functionality
-  const handleExportCSV = () => {
-    if (!students || students.length === 0) return;
-    const headers = ['ID', 'Name', 'Email', 'Age', 'Course', 'CreatedAt'];
-    const rows = sortedStudents.map((s) => [
+  // Pagination calculation
+  const totalRecords = sortedStudents.length;
+  const effectivePageSize = pageSize === 'ALL' ? totalRecords || 1 : Number(pageSize);
+  const totalPages = Math.max(1, Math.ceil(totalRecords / effectivePageSize));
+
+  // Current page records
+  const paginatedStudents = useMemo(() => {
+    if (pageSize === 'ALL') return sortedStudents;
+    const start = (currentPage - 1) * effectivePageSize;
+    return sortedStudents.slice(start, start + effectivePageSize);
+  }, [sortedStudents, currentPage, effectivePageSize, pageSize]);
+
+  // Handle Select All on current page
+  const allCurrentPageSelected =
+    paginatedStudents.length > 0 &&
+    paginatedStudents.every((s) => selectedIds.has(s.id));
+
+  const toggleSelectAll = () => {
+    const updated = new Set(selectedIds);
+    if (allCurrentPageSelected) {
+      paginatedStudents.forEach((s) => updated.delete(s.id));
+    } else {
+      paginatedStudents.forEach((s) => updated.add(s.id));
+    }
+    setSelectedIds(updated);
+  };
+
+  const toggleSelectRow = (id) => {
+    const updated = new Set(selectedIds);
+    if (updated.has(id)) {
+      updated.delete(id);
+    } else {
+      updated.add(id);
+    }
+    setSelectedIds(updated);
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  // Export to CSV
+  const handleExportCSV = (exportSelectedOnly = false) => {
+    const targetStudents = exportSelectedOnly
+      ? sortedStudents.filter((s) => selectedIds.has(s.id))
+      : sortedStudents;
+
+    if (!targetStudents || targetStudents.length === 0) return;
+
+    const headers = ['Record_ID', 'Student_Name', 'Email_Address', 'Age', 'Academic_Program', 'Enrollment_Date', 'Status'];
+    const rows = targetStudents.map((s) => [
       s.id,
-      `"${s.name.replace(/"/g, '""')}"`,
-      `"${s.email.replace(/"/g, '""')}"`,
+      `"${(s.name || '').replace(/"/g, '""')}"`,
+      `"${(s.email || '').replace(/"/g, '""')}"`,
       s.age,
-      `"${s.course.replace(/"/g, '""')}"`,
+      `"${(s.course || '').replace(/"/g, '""')}"`,
       s.createdAt || '',
+      'Active',
     ]);
+
     const csvContent =
       'data:text/csv;charset=utf-8,' +
       [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -115,62 +187,91 @@ export default function StudentTable({
     link.setAttribute('href', encodedUri);
     link.setAttribute(
       'download',
-      `student_roster_${new Date().toISOString().slice(0, 10)}.csv`
+      `academic_roster_${new Date().toISOString().slice(0, 10)}.csv`
     );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  // Print Roster
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Render Sort Icon
   const renderSortIcon = (field) => {
     if (sortField !== field) {
-      return <ArrowUpDown size={14} className="sort-icon-inactive" />;
+      return <IconSortDefault size={13} className="sort-icon-default" />;
     }
     return sortDirection === 'asc' ? (
-      <ArrowUp size={14} className="sort-icon-active" />
+      <IconSortAsc size={13} className="sort-icon-active" />
     ) : (
-      <ArrowDown size={14} className="sort-icon-active" />
+      <IconSortDesc size={13} className="sort-icon-active" />
     );
   };
 
+  // Reset all filters
+  const resetFilters = () => {
+    onSearchChange('');
+    onCourseChange('ALL');
+    setAgeFilter('ALL');
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters =
+    Boolean(searchQuery) ||
+    (selectedCourse && selectedCourse !== 'ALL') ||
+    ageFilter !== 'ALL';
+
   return (
     <div className="table-wrapper-card">
-      {/* Controls Bar */}
-      <div className="table-controls-bar">
+      {/* Search and Query Filter Bar */}
+      <div className="table-filter-bar no-print">
         {/* Search Input */}
-        <div className="search-input-wrapper">
-          <Search size={18} className="search-icon" />
+        <div className="search-field-container">
+          <IconSearch size={15} className="search-field-icon" />
           <input
             type="text"
-            className="search-input"
-            placeholder="Search students by name or email..."
+            className="search-field-input"
+            placeholder="Search by student name, email, or record ID..."
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(e) => {
+              onSearchChange(e.target.value);
+              setCurrentPage(1);
+            }}
             id="student-search-input"
           />
           {searchQuery && (
             <button
-              className="search-clear-btn"
-              onClick={() => onSearchChange('')}
-              title="Clear search"
+              className="search-clear-action"
+              onClick={() => {
+                onSearchChange('');
+                setCurrentPage(1);
+              }}
+              title="Clear search text"
+              aria-label="Clear search"
             >
-              <X size={14} />
+              <IconClose size={13} />
             </button>
           )}
         </div>
 
-        {/* Filter and Actions Toolbar */}
-        <div className="table-toolbar-right">
-          {/* Course filter select */}
-          <div className="filter-select-wrapper">
-            <Filter size={16} className="filter-icon" />
+        {/* Filter Controls Row */}
+        <div className="filter-controls-group">
+          {/* Course Program Selector */}
+          <div className="select-container">
+            <label htmlFor="course-filter-select" className="filter-label">Program:</label>
             <select
-              className="filter-select"
+              className="filter-select-element"
               value={selectedCourse}
-              onChange={(e) => onCourseChange(e.target.value)}
+              onChange={(e) => {
+                onCourseChange(e.target.value);
+                setCurrentPage(1);
+              }}
               id="course-filter-select"
             >
-              <option value="ALL">All Streams</option>
+              <option value="ALL">All Departments</option>
               {courses.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -179,117 +280,213 @@ export default function StudentTable({
             </select>
           </div>
 
-          {/* Export CSV */}
+          {/* Age Cohort Selector */}
+          <div className="select-container">
+            <label htmlFor="age-filter-select" className="filter-label">Age Cohort:</label>
+            <select
+              className="filter-select-element"
+              value={ageFilter}
+              onChange={(e) => {
+                setAgeFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              id="age-filter-select"
+            >
+              <option value="ALL">All Ages</option>
+              <option value="UNDER_20">Under 20</option>
+              <option value="20_25">20 to 25</option>
+              <option value="OVER_25">26 and Above</option>
+            </select>
+          </div>
+
+          {/* Rows Per Page */}
+          <div className="select-container">
+            <label htmlFor="page-size-select" className="filter-label">Rows:</label>
+            <select
+              className="filter-select-element"
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(e.target.value);
+                setCurrentPage(1);
+              }}
+              id="page-size-select"
+            >
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value="ALL">All</option>
+            </select>
+          </div>
+
+          {/* Reset Filters */}
+          {hasActiveFilters && (
+            <button
+              onClick={resetFilters}
+              className="btn-text-action"
+              title="Reset all filters"
+            >
+              Reset Filters
+            </button>
+          )}
+
+          {/* Export to CSV */}
           <button
-            onClick={handleExportCSV}
-            className="btn-secondary"
-            title="Export student records to CSV"
-            disabled={students.length === 0}
+            onClick={() => handleExportCSV(false)}
+            className="btn-table-action"
+            title="Export filtered roster to CSV spreadsheet"
+            disabled={sortedStudents.length === 0}
             id="export-csv-btn"
           >
-            <Download size={16} />
-            <span className="btn-text-desktop">Export CSV</span>
+            <IconDownload size={14} />
+            <span>Export CSV</span>
           </button>
 
-          {/* Refresh button */}
+          {/* Print Roster */}
+          <button
+            onClick={handlePrint}
+            className="btn-table-action"
+            title="Print printable academic roster"
+            disabled={sortedStudents.length === 0}
+            id="table-print-btn"
+          >
+            <IconPrinter size={14} />
+            <span>Print</span>
+          </button>
+
+          {/* Refresh */}
           <button
             onClick={onRefresh}
-            className={`btn-icon ${isLoading ? 'rotating' : ''}`}
-            title="Refresh student records"
-            aria-label="Refresh data"
+            className={`btn-table-icon ${isLoading ? 'is-loading' : ''}`}
+            title="Refresh database records"
+            aria-label="Refresh records"
           >
-            <RefreshCw size={16} />
+            <IconRefresh size={14} />
           </button>
         </div>
       </div>
 
-      {/* Main Table */}
-      <div className="table-responsive-container">
-        <table className="student-table" id="student-data-table">
+      {/* Batch Action Toolbar when rows are selected */}
+      {selectedIds.size > 0 && (
+        <div className="batch-toolbar no-print">
+          <div className="batch-info">
+            <span className="batch-count">{selectedIds.size}</span>
+            <span>student record(s) selected</span>
+          </div>
+          <div className="batch-actions">
+            <button
+              onClick={() => handleExportCSV(true)}
+              className="btn-batch-action"
+              title="Export only selected students"
+            >
+              <IconDownload size={13} />
+              <span>Export Selected ({selectedIds.size})</span>
+            </button>
+
+            {onBatchDelete && (
+              <button
+                onClick={() => onBatchDelete(Array.from(selectedIds))}
+                className="btn-batch-delete"
+                title="Permanently remove selected students"
+              >
+                <IconTrash size={13} />
+                <span>Delete Selected ({selectedIds.size})</span>
+              </button>
+            )}
+
+            <button
+              onClick={clearSelection}
+              className="btn-batch-cancel"
+            >
+              Clear Selection
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Data Table */}
+      <div className="table-container">
+        <table className="roster-table" id="student-roster-table">
           <thead>
             <tr>
-              <th onClick={() => handleSort('id')} className="cursor-pointer">
-                <div className="th-content">
-                  <span>ID</span>
+              <th className="th-checkbox no-print">
+                <input
+                  type="checkbox"
+                  checked={allCurrentPageSelected}
+                  onChange={toggleSelectAll}
+                  aria-label="Select all students on current page"
+                />
+              </th>
+              <th onClick={() => handleSort('id')} className="th-sortable">
+                <div className="th-flex">
+                  <span>Record ID</span>
                   {renderSortIcon('id')}
                 </div>
               </th>
-              <th onClick={() => handleSort('name')} className="cursor-pointer">
-                <div className="th-content">
-                  <span>Student Profile</span>
+              <th onClick={() => handleSort('name')} className="th-sortable">
+                <div className="th-flex">
+                  <span>Student Name & Email</span>
                   {renderSortIcon('name')}
                 </div>
               </th>
-              <th onClick={() => handleSort('age')} className="cursor-pointer">
-                <div className="th-content">
+              <th onClick={() => handleSort('age')} className="th-sortable">
+                <div className="th-flex">
                   <span>Age</span>
                   {renderSortIcon('age')}
                 </div>
               </th>
-              <th onClick={() => handleSort('course')} className="cursor-pointer">
-                <div className="th-content">
-                  <span>Course / Stream</span>
+              <th onClick={() => handleSort('course')} className="th-sortable">
+                <div className="th-flex">
+                  <span>Academic Program</span>
                   {renderSortIcon('course')}
                 </div>
               </th>
-              <th onClick={() => handleSort('createdAt')} className="cursor-pointer">
-                <div className="th-content">
-                  <span>Enrolled Date</span>
+              <th onClick={() => handleSort('createdAt')} className="th-sortable">
+                <div className="th-flex">
+                  <span>Enrollment Date</span>
                   {renderSortIcon('createdAt')}
                 </div>
               </th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th>Status</th>
+              <th className="th-actions no-print">Actions</th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
-              // Loading Skeleton Rows
-              Array.from({ length: 4 }).map((_, i) => (
+              // Real Skeleton Loaders (flat neutral loading bars)
+              Array.from({ length: pageSize === 'ALL' ? 8 : Math.min(Number(pageSize), 8) }).map((_, i) => (
                 <tr key={`skeleton-${i}`} className="skeleton-row">
-                  <td><div className="skeleton skeleton-id"></div></td>
+                  <td className="no-print"><div className="skeleton-box skeleton-chk"></div></td>
+                  <td><div className="skeleton-box skeleton-w-sm"></div></td>
                   <td>
-                    <div className="skeleton-profile">
-                      <div className="skeleton skeleton-avatar"></div>
-                      <div className="skeleton-info">
-                        <div className="skeleton skeleton-text"></div>
-                        <div className="skeleton skeleton-subtext"></div>
-                      </div>
-                    </div>
+                    <div className="skeleton-box skeleton-w-lg"></div>
+                    <div className="skeleton-box skeleton-w-md skeleton-mt"></div>
                   </td>
-                  <td><div className="skeleton skeleton-badge"></div></td>
-                  <td><div className="skeleton skeleton-badge"></div></td>
-                  <td><div className="skeleton skeleton-date"></div></td>
-                  <td><div className="skeleton skeleton-actions"></div></td>
+                  <td><div className="skeleton-box skeleton-w-xs"></div></td>
+                  <td><div className="skeleton-box skeleton-w-md"></div></td>
+                  <td><div className="skeleton-box skeleton-w-sm"></div></td>
+                  <td><div className="skeleton-box skeleton-w-xs"></div></td>
+                  <td className="no-print"><div className="skeleton-box skeleton-w-sm"></div></td>
                 </tr>
               ))
-            ) : sortedStudents.length === 0 ? (
+            ) : paginatedStudents.length === 0 ? (
               <tr>
-                <td colSpan="6" className="empty-state-cell">
-                  <div className="empty-state-card">
-                    <div className="empty-icon-circle">
-                      <GraduationCap size={32} className="text-accent" />
-                    </div>
-                    <h3 className="empty-state-title">No Students Found</h3>
-                    <p className="empty-state-desc">
-                      {searchQuery || (selectedCourse && selectedCourse !== 'ALL')
-                        ? 'No students matched your search criteria. Try resetting filters.'
-                        : 'No students have been registered yet in PostgreSQL.'}
+                <td colSpan="8" className="empty-row-cell">
+                  <div className="empty-panel">
+                    <div className="empty-heading">No Student Records Found</div>
+                    <p className="empty-text">
+                      {hasActiveFilters
+                        ? 'No students matched the active search or filter criteria. Modify or reset filters to display records.'
+                        : 'No student records currently exist in the database.'}
                     </p>
-                    <div className="empty-state-actions">
-                      {searchQuery || (selectedCourse && selectedCourse !== 'ALL') ? (
-                        <button
-                          onClick={() => {
-                            onSearchChange('');
-                            onCourseChange('ALL');
-                          }}
-                          className="btn-secondary"
-                        >
-                          Reset Filters
+                    <div className="empty-actions no-print">
+                      {hasActiveFilters ? (
+                        <button onClick={resetFilters} className="btn-secondary">
+                          Reset Filter Criteria
                         </button>
                       ) : (
                         <button onClick={onOpenCreateModal} className="btn-primary">
-                          <UserPlus size={16} />
-                          <span>Enroll First Student</span>
+                          <IconPlus size={15} />
+                          <span>Register First Student</span>
                         </button>
                       )}
                     </div>
@@ -297,96 +494,166 @@ export default function StudentTable({
                 </td>
               </tr>
             ) : (
-              sortedStudents.map((student) => (
-                <tr key={student.id} className="student-table-row">
-                  {/* ID */}
-                  <td>
-                    <span className="student-id-tag">#{student.id}</span>
-                  </td>
+              paginatedStudents.map((student) => {
+                const isSelected = selectedIds.has(student.id);
+                return (
+                  <tr
+                    key={student.id}
+                    className={`student-row ${isSelected ? 'row-selected' : ''}`}
+                  >
+                    {/* Checkbox */}
+                    <td className="no-print td-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelectRow(student.id)}
+                        aria-label={`Select student record #${student.id}`}
+                      />
+                    </td>
 
-                  {/* Profile */}
-                  <td>
-                    <div className="student-profile-cell">
-                      <div
-                        className="student-avatar"
-                        style={{ background: getAvatarGradient(student.name) }}
-                      >
-                        {getInitials(student.name)}
+                    {/* ID */}
+                    <td className="td-mono">
+                      #{student.id}
+                    </td>
+
+                    {/* Name & Email */}
+                    <td>
+                      <div className="student-identity">
+                        <span className="student-full-name">{student.name}</span>
+                        <span className="student-email-address">{student.email}</span>
                       </div>
-                      <div className="student-info">
-                        <span className="student-name">{student.name}</span>
-                        <span className="student-email">
-                          <Mail size={12} style={{ marginRight: '4px' }} />
-                          {student.email}
-                        </span>
+                    </td>
+
+                    {/* Age */}
+                    <td>
+                      <span className="age-text">{student.age}</span>
+                    </td>
+
+                    {/* Course */}
+                    <td>
+                      <span className="program-tag">{student.course}</span>
+                    </td>
+
+                    {/* Enrolled Date */}
+                    <td>
+                      <span className="date-text">{formatDate(student.createdAt)}</span>
+                    </td>
+
+                    {/* Status */}
+                    <td>
+                      <span className="status-badge status-active">Active</span>
+                    </td>
+
+                    {/* Operations */}
+                    <td className="no-print td-actions">
+                      <div className="actions-cluster">
+                        <button
+                          onClick={() => onViewStudent(student)}
+                          className="action-link-btn"
+                          title="View Student Record"
+                          id={`view-btn-${student.id}`}
+                        >
+                          <IconEye size={14} />
+                          <span className="action-text">View</span>
+                        </button>
+                        <button
+                          onClick={() => onEditStudent(student)}
+                          className="action-link-btn"
+                          title="Edit Student Record"
+                          id={`edit-btn-${student.id}`}
+                        >
+                          <IconEdit size={14} />
+                          <span className="action-text">Edit</span>
+                        </button>
+                        <button
+                          onClick={() => onDeleteStudent(student)}
+                          className="action-link-btn action-link-danger"
+                          title="Delete Student Record"
+                          id={`delete-btn-${student.id}`}
+                        >
+                          <IconTrash size={14} />
+                          <span className="action-text">Delete</span>
+                        </button>
                       </div>
-                    </div>
-                  </td>
-
-                  {/* Age */}
-                  <td>
-                    <span className="age-badge">{student.age} yrs</span>
-                  </td>
-
-                  {/* Course */}
-                  <td>
-                    <span className="course-pill">
-                      <GraduationCap size={13} style={{ marginRight: '5px' }} />
-                      {student.course}
-                    </span>
-                  </td>
-
-                  {/* Enrolled Date */}
-                  <td>
-                    <span className="date-text">{formatDate(student.createdAt)}</span>
-                  </td>
-
-                  {/* Actions */}
-                  <td>
-                    <div className="action-buttons-group">
-                      <button
-                        onClick={() => onViewStudent(student)}
-                        className="btn-action btn-view"
-                        title="View Student Profile"
-                        id={`view-btn-${student.id}`}
-                      >
-                        <Eye size={15} />
-                      </button>
-                      <button
-                        onClick={() => onEditStudent(student)}
-                        className="btn-action btn-edit"
-                        title="Edit Student"
-                        id={`edit-btn-${student.id}`}
-                      >
-                        <Edit2 size={15} />
-                      </button>
-                      <button
-                        onClick={() => onDeleteStudent(student)}
-                        className="btn-action btn-delete"
-                        title="Delete Student"
-                        id={`delete-btn-${student.id}`}
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Table Footer Status */}
-      <div className="table-footer-status">
-        <span>
-          Showing <strong>{sortedStudents.length}</strong> of{' '}
-          <strong>{students.length}</strong> student record(s)
-        </span>
-        {selectedCourse && selectedCourse !== 'ALL' && (
-          <span className="filtered-notice">
-            Filtered by course: <em>{selectedCourse}</em>
-          </span>
+      {/* Pagination & Status Footer */}
+      <div className="table-footer-pagination no-print">
+        <div className="pagination-count">
+          Showing{' '}
+          <strong>
+            {totalRecords === 0
+              ? 0
+              : (currentPage - 1) * effectivePageSize + 1}
+          </strong>{' '}
+          to{' '}
+          <strong>
+            {Math.min(currentPage * effectivePageSize, totalRecords)}
+          </strong>{' '}
+          of <strong>{totalRecords}</strong> student records
+          {totalRecords !== students.length && (
+            <span className="filtered-tally"> (filtered from {students.length} total)</span>
+          )}
+        </div>
+
+        {totalPages > 1 && (
+          <div className="pagination-nav">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="pagination-btn"
+              title="Previous Page"
+              aria-label="Previous Page"
+            >
+              <IconChevronLeft size={14} />
+              <span>Previous</span>
+            </button>
+
+            <div className="pagination-pages">
+              {Array.from({ length: totalPages }, (_, idx) => idx + 1).map((pg) => {
+                // Show first, last, and window around current page
+                if (
+                  pg === 1 ||
+                  pg === totalPages ||
+                  (pg >= currentPage - 1 && pg <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={pg}
+                      onClick={() => setCurrentPage(pg)}
+                      className={`page-num-btn ${currentPage === pg ? 'page-active' : ''}`}
+                    >
+                      {pg}
+                    </button>
+                  );
+                } else if (
+                  pg === currentPage - 2 ||
+                  pg === currentPage + 2
+                ) {
+                  return <span key={pg} className="page-ellipsis">...</span>;
+                }
+                return null;
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="pagination-btn"
+              title="Next Page"
+              aria-label="Next Page"
+            >
+              <span>Next</span>
+              <IconChevronRight size={14} />
+            </button>
+          </div>
         )}
       </div>
     </div>

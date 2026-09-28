@@ -1,85 +1,93 @@
 import React from 'react';
 import {
-  GraduationCap,
-  Plus,
-  Moon,
-  Sun,
-  Server,
-  FileCode,
-  Sparkles
-} from 'lucide-react';
+  IconBuilding,
+  IconPlus,
+  IconMoon,
+  IconSun,
+  IconServer,
+  IconPrinter
+} from './Icons';
 
 export default function Navbar({
   theme,
   toggleTheme,
   onOpenCreateModal,
   isBackendHealthy,
+  onPrint,
 }) {
   return (
-    <header className="navbar-container">
+    <header className="navbar-container no-print">
       <div className="navbar-inner">
-        {/* Brand */}
+        {/* Institutional Identity */}
         <div className="navbar-brand">
-          <div className="brand-logo-glow">
-            <GraduationCap className="brand-icon" size={26} />
+          <div className="brand-crest">
+            <IconBuilding size={20} />
           </div>
           <div>
             <div className="brand-title">
-              EduPulse <span className="brand-badge">PRO</span>
+              Academic Information System
             </div>
-            <div className="brand-subtitle">Full Stack Student Management</div>
+            <div className="brand-subtitle">
+              Office of the University Registrar | Student Directory
+            </div>
           </div>
         </div>
 
-        {/* Status & Actions */}
+        {/* System & Operations Controls */}
         <div className="navbar-actions">
-          {/* Backend Connection Indicator */}
+          {/* Term Status */}
+          <div className="term-badge" title="Active Academic Session">
+            Session: 2026-2027
+          </div>
+
+          {/* Database & API State */}
           <div
-            className={`status-pill ${
-              isBackendHealthy ? 'status-online' : 'status-offline'
+            className={`status-indicator ${
+              isBackendHealthy ? 'status-connected' : 'status-disconnected'
             }`}
             title={
               isBackendHealthy
-                ? 'Backend connected: Spring Boot + PostgreSQL on port 8080'
-                : 'Backend unreachable. Please verify Spring Boot server.'
+                ? 'Backend Operational: Spring Boot REST API & PostgreSQL connected'
+                : 'Connection Unreachable: Spring Boot server offline'
             }
           >
-            <span className="pulse-dot"></span>
-            <Server size={13} style={{ marginRight: '5px' }} />
-            <span>{isBackendHealthy ? 'Spring Boot Active' : 'Disconnected'}</span>
+            <span className="status-dot"></span>
+            <IconServer size={13} className="status-icon" />
+            <span>{isBackendHealthy ? 'Database Online' : 'Database Offline'}</span>
           </div>
 
-          {/* Swagger API Docs link */}
-          <a
-            href="http://localhost:8080/swagger-ui/index.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-ghost"
-            title="Open Swagger OpenAPI Documentation"
-          >
-            <FileCode size={16} />
-            <span className="btn-text-desktop">Swagger UI</span>
-          </a>
+          {/* Quick Print Button */}
+          {onPrint && (
+            <button
+              onClick={onPrint}
+              className="btn-toolbar"
+              title="Print Current Student Roster"
+              id="print-roster-btn"
+            >
+              <IconPrinter size={15} />
+              <span className="btn-label-desktop">Print Roster</span>
+            </button>
+          )}
 
           {/* Theme Switcher */}
           <button
             onClick={toggleTheme}
-            className="btn-icon theme-toggle-btn"
+            className="btn-toolbar"
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
             id="theme-toggle-button"
             aria-label="Toggle color theme"
           >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            {theme === 'dark' ? <IconSun size={15} /> : <IconMoon size={15} />}
           </button>
 
-          {/* Add Student Primary Action */}
+          {/* Primary Action: Register Student */}
           <button
             onClick={onOpenCreateModal}
             className="btn-primary"
             id="add-student-btn"
           >
-            <Plus size={18} />
-            <span>Add Student</span>
+            <IconPlus size={16} />
+            <span>Register Student</span>
           </button>
         </div>
       </div>
